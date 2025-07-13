@@ -30,6 +30,7 @@ import (
 	"github.com/go-logr/logr"
 	externalhaproxyoperatorv1alpha1 "github.com/ullbergm/external-haproxy-operator/api/v1alpha1"
 	"github.com/ullbergm/external-haproxy-operator/internal/haproxyclient"
+	"github.com/ullbergm/external-haproxy-operator/internal/monitoring"
 )
 
 // BackendReconciler reconciles a Backend object
@@ -79,6 +80,14 @@ func (r *BackendReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
+	// Create a backend in HAProxy if it does not exist
+	if err := r.HAProxyClient.EnsureBackend(externalhaproxyoperatorv1alpha1.BackendSpecToModel(backend.Spec)); err != nil {
+		// Increment the error counter metric
+		monitoring.HAProxyClientErrorCountTotal.Inc()
+		reqLogger.Error(err, "Failed to create backend in HAProxy", "name", backend.Name)
+		return ctrl.Result{}, err
+	}
+
 	// Check if the Backend instance is marked to be deleted, which is
 	// indicated by the deletion timestamp being set.
 	isBackendMarkedToBeDeleted := backend.GetDeletionTimestamp() != nil
@@ -119,13 +128,13 @@ func (r *BackendReconciler) finalizeBackend(reqLogger logr.Logger, m *externalha
 	reqLogger.Info("Finalizing Backend", "name", m.Name)
 
 	// Delete the backend from HAProxy
-	// if err := r.HAProxyClient.DeleteBackend(m.Name); err != nil {
-	// 	// Increment the error counter metric
-	// 	monitoring.HAProxyClientErrorCountTotal.Inc()
+	if err := r.HAProxyClient.DeleteBackend(m.Name); err != nil {
+		// Increment the error counter metric
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 
-	// 	reqLogger.Error(err, "Failed to delete backend from HAProxy", "name", m.Name)
-	// 	return err
-	// }
+		reqLogger.Error(err, "Failed to delete backend from HAProxy", "name", m.Name)
+		return err
+	}
 
 	// Emit an event for the finalization
 	r.Recorder.Event(m, "Normal", "Finalized", "Successfully finalized backend")
