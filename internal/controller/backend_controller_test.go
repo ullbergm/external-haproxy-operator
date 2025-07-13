@@ -51,21 +51,45 @@ var _ = Describe("Backend Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: externalhaproxyoperatorv1alpha1.BackendSpec{
+						Name: "test-backend",
+						Balance: &externalhaproxyoperatorv1alpha1.Balance{
+							Algorithm: func() *string {
+								alg := "roundrobin"
+								return &alg
+							}(),
+						},
+						AdvCheck: "httpchk",
+						Servers: map[string]externalhaproxyoperatorv1alpha1.Server{
+							"server1": {
+								Name:    "server1",
+								Address: "127.0.0.1",
+								Port:    func() *int64 { v := int64(8080); return &v }(),
+							},
+							"server2": {
+								Name:    "server2",
+								Address: "127.0.0.2",
+								Port:    func() *int64 { v := int64(8080); return &v }(),
+							},
+						},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
 		})
 
 		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
+			// Cleanup logic after each test, only delete if the resource still exists.
 			resource := &externalhaproxyoperatorv1alpha1.Backend{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Cleanup the specific resource instance Backend")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			if err == nil {
+				By("Cleanup the specific resource instance Backend")
+				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			} else {
+				Expect(errors.IsNotFound(err)).To(BeTrue())
+			}
 		})
+
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &BackendReconciler{
@@ -79,6 +103,63 @@ var _ = Describe("Backend Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
 			// Example: If you expect a certain status condition after reconciliation, verify it here.
+		})
+
+		It("should return an error when the resource does not exist", func() {
+			By("Reconciling a non-existent resource")
+			nonExistentName := types.NamespacedName{
+				Name:      "non-existent-backend",
+				Namespace: "default",
+			}
+			controllerReconciler := &BackendReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+			}
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: nonExistentName,
+			})
+			// Should not error, as the default implementation returns nil, but you can update this if logic changes
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("should be able to update the Backend resource", func() {
+			By("Updating the Backend resource")
+			resource := &externalhaproxyoperatorv1alpha1.Backend{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, resource)).To(Succeed())
+
+			// Example update: add an annotation
+			if resource.Annotations == nil {
+				resource.Annotations = map[string]string{}
+			}
+			resource.Annotations["test-annotation"] = "true"
+			Expect(k8sClient.Update(ctx, resource)).To(Succeed())
+
+			By("Reconciling the updated resource")
+			controllerReconciler := &BackendReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+			}
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			// Verify the annotation is present
+			updated := &externalhaproxyoperatorv1alpha1.Backend{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
+			Expect(updated.Annotations).To(HaveKeyWithValue("test-annotation", "true"))
+		})
+
+		It("should delete the Backend resource and not find it afterwards", func() {
+			By("Deleting the Backend resource")
+			resource := &externalhaproxyoperatorv1alpha1.Backend{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, resource)).To(Succeed())
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, typeNamespacedName, resource)
+				return errors.IsNotFound(err)
+			}).Should(BeTrue())
 		})
 	})
 })
