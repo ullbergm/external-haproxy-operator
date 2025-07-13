@@ -3,6 +3,7 @@ module github.com/ullbergm/external-haproxy-operator
 go 1.24.0
 
 require (
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/haproxytech/client-native/v6 v6.2.2
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0

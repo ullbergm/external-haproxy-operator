@@ -56,15 +56,11 @@ type Balance struct {
 	Algorithm *string `json:"algorithm"`
 }
 
-// # HAProxy backend servers array
-//
-// swagger:model servers
+// HAProxy backend servers array.
 type Servers []*Server
 
 // HAProxy backend server configuration
 // Example: {"address":"10.1.1.1","name":"www","port":8080}
-//
-// swagger:model server
 type Server struct {
 	ServerParams `json:",inline"`
 
@@ -91,7 +87,7 @@ type Server struct {
 	Port *int64 `json:"port,omitempty"`
 }
 
-// swagger:model server_params
+// ServerParams defines additional parameters for a server.
 type ServerParams struct {
 	// check
 	// Enum: ["enabled","disabled"]
@@ -101,12 +97,23 @@ type ServerParams struct {
 
 // BackendStatus defines the observed state of Backend.
 type BackendStatus struct {
+	// Represents the observations of a backend's current state.
+	// Backend.status.conditions.type are: "Available", "Progressing", and "Degraded"
+	// Backend.status.conditions.status are one of True, False, Unknown.
+	// Backend.status.conditions.reason the value should be a CamelCase string and producers of specific
+	// condition types may define expected values and meanings for this field, and whether the values
+	// are considered a guaranteed API.
+	// Backend.status.conditions.Message is a human readable message indicating details about the transition.
+
+	// Conditions store the status conditions of the Backend
+	// +operator-sdk:csv:customresourcedefinitions:type=status
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
-// swagger:model http_checks
+// HTTPChecks is a slice of HTTPCheck pointers.
 type HTTPChecks []*HTTPCheck
 
-// swagger:model http_check
+// HTTPCheck defines the HTTP check configuration for a backend.
 type HTTPCheck struct {
 	// type
 	// Required: true
@@ -126,7 +133,7 @@ type HTTPCheck struct {
 	CheckHeaders []*ReturnHeader `json:"headers,omitempty"`
 }
 
-// swagger:model ReturnHeader
+// ReturnHeader defines the headers sent/returned by the HTTP check.
 type ReturnHeader struct {
 
 	// fmt
@@ -234,6 +241,7 @@ func ModelToBackendSpec(model *haproxy_models.Backend) BackendSpec {
 // +kubebuilder:subresource:status
 
 // Backend is the Schema for the backends API.
+// +kubebuilder:subresource:status
 type Backend struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

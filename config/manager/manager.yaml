@@ -92,6 +92,30 @@ spec:
           requests:
             cpu: 10m
             memory: 64Mi
+        env:
+          - name: WATCH_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: HAPROXY_API_URL
+            value: "http://haproxy:5555"
+          - name: HAPROXY_API_USERNAME
+            value: "admin"
+          # Uncomment the following lines if you want to use a secret for the password  
+          #  valueFrom:
+          #    secretKeyRef:
+          #      name: haproxy-api-secret
+          #      key: username
+          - name: HAPROXY_API_PASSWORD
+            value: "password"
+          # Uncomment the following lines if you want to use a secret for the password  
+          #  valueFrom:
+          #    secretKeyRef:
+          #      name: haproxy-api-secret
+          #      key: password
+
+          # - name: WATCH_LABEL
+          #   value: "external-vip=true"
         volumeMounts: []
       volumes: []
       serviceAccountName: controller-manager
