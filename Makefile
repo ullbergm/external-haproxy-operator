@@ -50,7 +50,7 @@ endif
 # This is useful for CI or a project to utilize a specific version of the operator-sdk toolkit.
 OPERATOR_SDK_VERSION ?= v1.41.0
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= ghcr.io/ullbergm/external-haproxy-operator-controller:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -360,3 +360,9 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+##@ Generate the metrics documentation
+.PHONY: generate-metricsdocs
+generate-metricsdocs:
+	mkdir -p $(shell pwd)/docs/monitoring
+	go run -ldflags="${LDFLAGS}" ./monitoring/metricsdocs > docs/monitoring/metrics.md

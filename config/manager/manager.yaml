@@ -99,14 +99,14 @@ spec:
                 fieldPath: metadata.namespace
           - name: HAPROXY_API_URL
             value: "http://haproxy:5555"
-          - name: HAPROXY_API_USERNAME
+          - name: HAPROXY_API_USER
             value: "admin"
           # Uncomment the following lines if you want to use a secret for the password  
           #  valueFrom:
           #    secretKeyRef:
           #      name: haproxy-api-secret
           #      key: username
-          - name: HAPROXY_API_PASSWORD
+          - name: HAPROXY_API_PASS
             value: "password"
           # Uncomment the following lines if you want to use a secret for the password  
           #  valueFrom:
