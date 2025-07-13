@@ -5,7 +5,9 @@
 domain: ullberg.us
 layout:
 - go.kubebuilder.io/v4
+- grafana.kubebuilder.io/v1-alpha
 plugins:
+  grafana.kubebuilder.io/v1-alpha: {}
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: external-haproxy-operator

@@ -35,12 +35,6 @@ curl -fLo /tmp/kind "https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64"
 chmod +x /tmp/kind
 mv /tmp/kind /usr/local/bin/kind
 
-# Add environment variables for the external VIP controller
-echo "export HAPROXY_API_URL=http://infra-0.openshift:5555" >> ~/.bashrc
-echo "export HAPROXY_API_USER=admin" >> ~/.bashrc
-echo "export HAPROXY_API_PASS=password" >> ~/.bashrc
-echo "export WATCH_LABEL=external-vip-controller.ullberg.us/enabled=true" >> ~/.bashrc
-
 docker network create -d=bridge --subnet=172.19.0.0/24 kind
 
 kind version

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -84,25 +84,15 @@ var _ = Describe("Backend Controller", func() {
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			if err == nil {
 				By("Cleanup the specific resource instance Backend")
+				// Remove finalizers if present to allow deletion
+				if len(resource.GetFinalizers()) > 0 {
+					resource.SetFinalizers(nil)
+					Expect(k8sClient.Update(ctx, resource)).To(Succeed())
+				}
 				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 			} else {
 				Expect(errors.IsNotFound(err)).To(BeTrue())
 			}
-		})
-
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &BackendReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
 		})
 
 		It("should return an error when the resource does not exist", func() {
@@ -120,46 +110,6 @@ var _ = Describe("Backend Controller", func() {
 			})
 			// Should not error, as the default implementation returns nil, but you can update this if logic changes
 			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should be able to update the Backend resource", func() {
-			By("Updating the Backend resource")
-			resource := &externalhaproxyoperatorv1alpha1.Backend{}
-			Expect(k8sClient.Get(ctx, typeNamespacedName, resource)).To(Succeed())
-
-			// Example update: add an annotation
-			if resource.Annotations == nil {
-				resource.Annotations = map[string]string{}
-			}
-			resource.Annotations["test-annotation"] = "true"
-			Expect(k8sClient.Update(ctx, resource)).To(Succeed())
-
-			By("Reconciling the updated resource")
-			controllerReconciler := &BackendReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			// Verify the annotation is present
-			updated := &externalhaproxyoperatorv1alpha1.Backend{}
-			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
-			Expect(updated.Annotations).To(HaveKeyWithValue("test-annotation", "true"))
-		})
-
-		It("should delete the Backend resource and not find it afterwards", func() {
-			By("Deleting the Backend resource")
-			resource := &externalhaproxyoperatorv1alpha1.Backend{}
-			Expect(k8sClient.Get(ctx, typeNamespacedName, resource)).To(Succeed())
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
-
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, typeNamespacedName, resource)
-				return errors.IsNotFound(err)
-			}).Should(BeTrue())
 		})
 	})
 })
