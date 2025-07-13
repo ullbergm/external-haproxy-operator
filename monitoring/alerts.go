@@ -10,7 +10,8 @@ const (
 	ruleName                     = "external-haproxy-operator-rules"
 	alertRuleGroup               = "external-haproxy-operator.rules"
 	haProxyClientErrorCountAlert = "HAProxyClientErrorCountTotal"
-	runbookURLBasePath           = "https://github.com/ullbergm/external-haproxy-operator/tree/master/docs/monitoring/runbooks/"
+	runbookURLBasePath           = "https://github.com/ullbergm/external-haproxy-operator/" +
+		"tree/master/docs/monitoring/runbooks/"
 )
 
 // NewPrometheusRule creates new PrometheusRule(CR) for the operator to have alerts and recording rules
@@ -40,7 +41,8 @@ func NewPrometheusRuleSpec() *monitoringv1.PrometheusRuleSpec {
 	}
 }
 
-// createhaProxyClientErrorCountAlertRule creates HAProxyClientErrorCountTotal alert rule that triggers when the HAProxy client error count exceeds a threshold for the last 5 minutes.
+// createhaProxyClientErrorCountAlertRule creates HAProxyClientErrorCountTotal alert rule that triggers
+// when the HAProxy client error count exceeds a threshold for the last 5 minutes.
 func createhaProxyClientErrorCountAlertRule() monitoringv1.Rule {
 	return monitoringv1.Rule{
 		Alert: haProxyClientErrorCountAlert,
