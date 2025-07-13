@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- external-haproxy-operator_v1alpha1_backend.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

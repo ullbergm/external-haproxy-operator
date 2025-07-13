@@ -1,0 +1,209 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: backends.external-haproxy-operator.ullberg.us
+spec:
+  group: external-haproxy-operator.ullberg.us
+  names:
+    kind: Backend
+    listKind: BackendList
+    plural: backends
+    singular: backend
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Backend is the Schema for the backends API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackendSpec defines the desired state of Backend.
+            properties:
+              adv_check:
+                description: |-
+                  adv check
+                  Enum: ["httpchk","ldap-check","mysql-check","pgsql-check","redis-check","smtpchk","ssl-hello-chk","tcp-check"]
+                enum:
+                - httpchk
+                - ldap-check
+                - mysql-check
+                - pgsql-check
+                - redis-check
+                - smtpchk
+                - ssl-hello-chk
+                - tcp-check
+                type: string
+              balance:
+                description: balance
+                properties:
+                  algorithm:
+                    description: |-
+                      algorithm
+                      Required: true
+                      Enum: ["first","hash","hdr","leastconn","random","rdp-cookie","roundrobin","source","static-rr","uri","url_param"]
+                    enum:
+                    - first
+                    - hash
+                    - hdr
+                    - leastconn
+                    - random
+                    - rdp-cookie
+                    - roundrobin
+                    - source
+                    - static-rr
+                    - uri
+                    - url_param
+                    type: string
+                required:
+                - algorithm
+                type: object
+              http_check_list:
+                description: HTTP check list
+                items:
+                  description: swagger:model http_check
+                  properties:
+                    headers:
+                      description: check headers
+                      items:
+                        description: swagger:model ReturnHeader
+                        properties:
+                          fmt:
+                            description: |-
+                              fmt
+                              Required: true
+                            type: string
+                          name:
+                            description: |-
+                              name
+                              Required: true
+                            type: string
+                        required:
+                        - fmt
+                        - name
+                        type: object
+                      type: array
+                    method:
+                      description: |-
+                        method
+                        Enum: ["HEAD","PUT","POST","GET","TRACE","PATCH","DELETE","CONNECT","OPTIONS"]
+                      enum:
+                      - HEAD
+                      - PUT
+                      - POST
+                      - GET
+                      - TRACE
+                      - PATCH
+                      - DELETE
+                      - CONNECT
+                      - OPTIONS
+                      type: string
+                    type:
+                      description: |-
+                        type
+                        Required: true
+                        Enum: ["comment","connect","disable-on-404","expect","send","send-state","set-var","set-var-fmt","unset-var"]
+                      enum:
+                      - comment
+                      - connect
+                      - disable-on-404
+                      - expect
+                      - send
+                      - send-state
+                      - set-var
+                      - set-var-fmt
+                      - unset-var
+                      type: string
+                    uri:
+                      description: uri
+                      type: string
+                  required:
+                  - type
+                  type: object
+                type: array
+              name:
+                description: |-
+                  name
+                  Required: true
+                  Pattern: ^[A-Za-z0-9-_.:]+$
+                pattern: ^[A-Za-z0-9-_.:]+$
+                type: string
+              servers:
+                additionalProperties:
+                  description: |-
+                    HAProxy backend server configuration
+                    Example: {"address":"10.1.1.1","name":"www","port":8080}
+
+                    swagger:model server
+                  properties:
+                    address:
+                      description: |-
+                        address
+                        Required: true
+                        Pattern: ^[^\s]+$
+                      pattern: ^[^\s]+$
+                      type: string
+                    check:
+                      description: |-
+                        check
+                        Enum: ["enabled","disabled"]
+                      enum:
+                      - enabled
+                      - disabled
+                      type: string
+                    id:
+                      description: id
+                      format: int64
+                      type: integer
+                    name:
+                      description: |-
+                        name
+                        Required: true
+                        Pattern: ^[^\s]+$
+                      pattern: ^[^\s]+$
+                      type: string
+                    port:
+                      description: |-
+                        port
+                        Maximum: 65535
+                        Minimum: 1
+                      format: int64
+                      maximum: 65535
+                      minimum: 1
+                      type: integer
+                  required:
+                  - address
+                  - name
+                  type: object
+                description: servers
+                type: object
+            required:
+            - name
+            type: object
+          status:
+            description: BackendStatus defines the observed state of Backend.
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,9 @@
+apiVersion: external-haproxy-operator.ullberg.us/v1alpha1
+kind: Backend
+metadata:
+  labels:
+    app.kubernetes.io/name: external-haproxy-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: backend-sample
+spec:
+  # TODO(user): Add fields here
