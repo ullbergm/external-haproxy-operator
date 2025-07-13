@@ -1,5 +1,6 @@
 # Build the manager binary
 FROM golang:1.24 AS builder
+
 ARG TARGETOS
 ARG TARGETARCH
 
@@ -27,6 +28,11 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o ma
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
+LABEL org.opencontainers.image.source="https://github.com/ullbergm/external-haproxy-operator"
+LABEL org.opencontainers.image.description="External HAProxy Operator for Kubernetes"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.authors="Magnus Ullberg <magnus@ullberg.us>"
+LABEL org.opencontainers.image.url="https://github.com/ullbergm/external-haproxy-operator"
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
