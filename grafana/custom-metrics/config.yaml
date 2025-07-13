@@ -13,3 +13,8 @@ customMetrics:
 #     unit: none
 #     type: histogram
 #   	expr: histogram_quantile(0.90, sum by(instance, le) (rate(foo_bar{job=\"$job\", namespace=\"$namespace\"}[5m])))
+
+  - metric: haproxy_client_errors_count_total
+    type: counter
+    expr: haproxy_client_errors_count_total
+    unit: none

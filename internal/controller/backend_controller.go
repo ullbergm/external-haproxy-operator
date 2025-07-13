@@ -120,6 +120,9 @@ func (r *BackendReconciler) finalizeBackend(reqLogger logr.Logger, m *externalha
 
 	// Delete the backend from HAProxy
 	// if err := r.HAProxyClient.DeleteBackend(m.Name); err != nil {
+	// 	// Increment the error counter metric
+	// 	monitoring.HAProxyClientErrorCountTotal.Inc()
+
 	// 	reqLogger.Error(err, "Failed to delete backend from HAProxy", "name", m.Name)
 	// 	return err
 	// }

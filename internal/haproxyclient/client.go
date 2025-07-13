@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ullbergm/external-haproxy-operator/internal/monitoring"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -56,6 +58,7 @@ func NewHAProxyClient(config HAProxyConfig) HAProxyClient {
 func (c *Client) StartTransaction() (Transaction, error) {
 	version, err := c.GetConfigVersion()
 	if err != nil {
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, err
 	}
 
@@ -64,12 +67,15 @@ func (c *Client) StartTransaction() (Transaction, error) {
 		SetResult(&Transaction{}).
 		Post(c.config.BaseURL + "/v3/services/haproxy/transactions")
 	if err != nil {
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, err
 	}
 	if resp.StatusCode() == 409 {
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, &APIError{StatusCode: 409, Body: "Too many transactions"}
 	}
 	if resp.IsError() {
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, restyErr(resp)
 	}
 	tr := resp.Result().(*Transaction)
@@ -87,6 +93,9 @@ func (c *Client) CommitTransaction(id string, forceReload bool) (Transaction, er
 	if !c.transactionDirty {
 		// No changes, delete the transaction instead of committing
 		err := c.DeleteTransaction(id)
+		if err != nil {
+			monitoring.HAProxyClientErrorCountTotal.Inc()
+		}
 		c.transactionDirty = false
 		return Transaction{}, err
 	}
@@ -96,6 +105,7 @@ func (c *Client) CommitTransaction(id string, forceReload bool) (Transaction, er
 		SetResult(&Transaction{}).
 		Put(c.config.BaseURL + "/v3/services/haproxy/transactions/" + id)
 	if err != nil {
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, err
 	}
 
@@ -107,13 +117,17 @@ func (c *Client) CommitTransaction(id string, forceReload bool) (Transaction, er
 		}
 		return *tr, nil
 	case 400:
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, &APIError{StatusCode: 400, Body: "Bad request"}
 	case 404:
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, &APIError{StatusCode: 404, Body: "Resource not found"}
 	case 406:
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return Transaction{}, &APIError{StatusCode: 406, Body: "Resource cannot be handled"}
 	default:
 		if resp.IsError() {
+			monitoring.HAProxyClientErrorCountTotal.Inc()
 			return Transaction{}, restyErr(resp)
 		}
 		tr := resp.Result().(*Transaction)
@@ -139,6 +153,7 @@ func (c *Client) DeleteTransaction(id string) error {
 	resp, err := c.client.R().
 		Delete(c.config.BaseURL + "/v3/services/haproxy/transactions/" + id)
 	if err != nil {
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return err
 	}
 	switch resp.StatusCode() {
@@ -148,9 +163,11 @@ func (c *Client) DeleteTransaction(id string) error {
 		}
 		return nil
 	case 404:
+		monitoring.HAProxyClientErrorCountTotal.Inc()
 		return &APIError{StatusCode: 404, Body: "Transaction not found"}
 	default:
 		if resp.IsError() {
+			monitoring.HAProxyClientErrorCountTotal.Inc()
 			return restyErr(resp)
 		}
 		return nil
@@ -159,6 +176,8 @@ func (c *Client) DeleteTransaction(id string) error {
 
 // restyErr extracts error details from a resty.Response
 func restyErr(resp *resty.Response) error {
+	// Could we just do this and assume the restyErr function is called every time?
+	// monitoring.HAProxyClientErrorCountTotal.Inc()
 	return &APIError{StatusCode: resp.StatusCode(), Body: resp.String()}
 }
 
