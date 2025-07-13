@@ -139,21 +139,6 @@ type ReturnHeader struct {
 }
 
 // ----- Conversion helpers -----
-// --- Conversion helpers ---
-
-func derefString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-func ptrString(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
-}
 
 func BackendSpecToModel(spec BackendSpec) *haproxy_models.Backend {
 	var balance *haproxy_models.Balance
@@ -173,7 +158,7 @@ func BackendSpecToModel(spec BackendSpec) *haproxy_models.Backend {
 		}
 	}
 
-	var httpChecks []*haproxy_models.HTTPCheck
+	httpChecks := make([]*haproxy_models.HTTPCheck, 0, len(spec.HTTPCheckList))
 	for _, hc := range spec.HTTPCheckList {
 		var headers []*haproxy_models.ReturnHeader
 		for _, h := range hc.CheckHeaders {
@@ -203,9 +188,9 @@ func BackendSpecToModel(spec BackendSpec) *haproxy_models.Backend {
 
 func ModelToBackendSpec(model *haproxy_models.Backend) BackendSpec {
 	var balance *Balance
-	if model.BackendBase.Balance != nil {
+	if model.Balance != nil {
 		balance = &Balance{
-			Algorithm: model.BackendBase.Balance.Algorithm,
+			Algorithm: model.Balance.Algorithm,
 		}
 	}
 
@@ -219,7 +204,7 @@ func ModelToBackendSpec(model *haproxy_models.Backend) BackendSpec {
 		}
 	}
 
-	var httpChecks HTTPChecks
+	httpChecks := make(HTTPChecks, 0, len(model.HTTPCheckList))
 	for _, hc := range model.HTTPCheckList {
 		var headers []*ReturnHeader
 		for _, h := range hc.CheckHeaders {
@@ -237,9 +222,9 @@ func ModelToBackendSpec(model *haproxy_models.Backend) BackendSpec {
 	}
 
 	return BackendSpec{
-		Name:          model.BackendBase.Name,
+		Name:          model.Name,
 		Balance:       balance,
-		AdvCheck:      model.BackendBase.AdvCheck,
+		AdvCheck:      model.AdvCheck,
 		Servers:       servers,
 		HTTPCheckList: httpChecks,
 	}
