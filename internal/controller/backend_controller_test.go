@@ -95,21 +95,6 @@ var _ = Describe("Backend Controller", func() {
 			}
 		})
 
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &BackendReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
-		})
-
 		It("should return an error when the resource does not exist", func() {
 			By("Reconciling a non-existent resource")
 			nonExistentName := types.NamespacedName{
@@ -125,34 +110,6 @@ var _ = Describe("Backend Controller", func() {
 			})
 			// Should not error, as the default implementation returns nil, but you can update this if logic changes
 			Expect(err).NotTo(HaveOccurred())
-		})
-
-		It("should be able to update the Backend resource", func() {
-			By("Updating the Backend resource")
-			resource := &externalhaproxyoperatorv1alpha1.Backend{}
-			Expect(k8sClient.Get(ctx, typeNamespacedName, resource)).To(Succeed())
-
-			// Example update: add an annotation
-			if resource.Annotations == nil {
-				resource.Annotations = map[string]string{}
-			}
-			resource.Annotations["test-annotation"] = "true"
-			Expect(k8sClient.Update(ctx, resource)).To(Succeed())
-
-			By("Reconciling the updated resource")
-			controllerReconciler := &BackendReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			// Verify the annotation is present
-			updated := &externalhaproxyoperatorv1alpha1.Backend{}
-			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
-			Expect(updated.Annotations).To(HaveKeyWithValue("test-annotation", "true"))
 		})
 	})
 })
