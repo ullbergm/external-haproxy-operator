@@ -30,7 +30,7 @@ import (
 	"github.com/go-logr/logr"
 	externalhaproxyoperatorv1alpha1 "github.com/ullbergm/external-haproxy-operator/api/v1alpha1"
 	"github.com/ullbergm/external-haproxy-operator/internal/haproxyclient"
-	"github.com/ullbergm/external-haproxy-operator/internal/monitoring"
+	"github.com/ullbergm/external-haproxy-operator/monitoring"
 )
 
 // BackendReconciler reconciles a Backend object

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ullbergm/external-haproxy-operator/internal/monitoring"
+	"github.com/ullbergm/external-haproxy-operator/monitoring"
 
 	"github.com/go-resty/resty/v2"
 )
