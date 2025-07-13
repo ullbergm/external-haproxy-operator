@@ -42,6 +42,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	"github.com/ullbergm/external-haproxy-operator/internal/monitoring"
+
 	externalhaproxyoperatorv1alpha1 "github.com/ullbergm/external-haproxy-operator/api/v1alpha1"
 	"github.com/ullbergm/external-haproxy-operator/internal/controller"
 	"github.com/ullbergm/external-haproxy-operator/internal/haproxyclient"
@@ -57,6 +59,10 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(externalhaproxyoperatorv1alpha1.AddToScheme(scheme))
+
+	// Register metrics
+	monitoring.RegisterMetrics()
+
 	// +kubebuilder:scaffold:scheme
 }
 
