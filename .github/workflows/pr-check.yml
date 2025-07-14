@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install pre-commit
-        run: apt -y install pre-commit
+        run: sudo apt-get update -y && sudo apt-get install -y pre-commit
 
       - name: Check commits
         run: pre-commit run --hook-stage manual
