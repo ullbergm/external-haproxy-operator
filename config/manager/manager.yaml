@@ -101,14 +101,14 @@ spec:
             value: "http://haproxy:5555"
           - name: HAPROXY_API_USER
             value: "admin"
-          # Uncomment the following lines if you want to use a secret for the password  
+          # Uncomment the following lines if you want to use a secret for the password
           #  valueFrom:
           #    secretKeyRef:
           #      name: haproxy-api-secret
           #      key: username
           - name: HAPROXY_API_PASS
             value: "password"
-          # Uncomment the following lines if you want to use a secret for the password  
+          # Uncomment the following lines if you want to use a secret for the password
           #  valueFrom:
           #    secretKeyRef:
           #      name: haproxy-api-secret

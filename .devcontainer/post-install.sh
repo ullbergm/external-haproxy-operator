@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-apt-get update && apt-get install -y bash git make curl
+apt-get update && apt-get install -y bash git make curl pre-commit
 
 # Install kubectl
 curl -fLo /usr/local/bin/kubectl https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
@@ -43,3 +43,5 @@ docker --version
 go version
 kubectl version --client
 oc version --client
+pre-commit install
+pre-commit run --all-files
