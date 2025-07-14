@@ -25,4 +25,3 @@ resources:
 - backend_admin_role.yaml
 - backend_editor_role.yaml
 - backend_viewer_role.yaml
-
