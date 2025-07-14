@@ -29,6 +29,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Run make generate
+        run: make generate
+
       - name: Tidy Go modules
         run: go mod tidy
 

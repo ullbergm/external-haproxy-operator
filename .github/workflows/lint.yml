@@ -23,6 +23,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Run make generate
+        run: make generate
+
       - name: Run linter
         uses: golangci/golangci-lint-action@v8
         with:

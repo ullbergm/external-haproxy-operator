@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/haproxytech/client-native/v6/models"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // GetBackend retrieves a backend by name
@@ -33,6 +34,10 @@ func (c *Client) GetBackend(name string) (*models.Backend, error) {
 			Operation:  "get backend",
 		}
 	}
+
+	// Log the response body for debugging
+	logf.Log.V(2).Info("GetBackend response", "name", name, "status", resp.Status(), "body", string(resp.Body()), "object", resp.Result().(*models.Backend))
+
 	return resp.Result().(*models.Backend), nil
 }
 
@@ -42,7 +47,7 @@ func (c *Client) EnsureBackend(backend *models.Backend) error {
 
 	queryKey, queryVal, err := c.getVersionOrTransactionParam()
 	if err != nil {
-		return fmt.Errorf("getting config version: %w", err)
+		return err
 	}
 
 	existing, err := c.GetBackend(backend.Name)
@@ -52,6 +57,9 @@ func (c *Client) EnsureBackend(backend *models.Backend) error {
 
 	var resp *resty.Response
 	if existing == nil {
+		// Log the creation attempt
+		logf.Log.V(1).Info("Creating new backend", "name", backend.Name, "object", backend)
+
 		// Create new backend
 		resp, err = c.client.R().
 			SetHeader("Content-Type", "application/json").
@@ -60,12 +68,16 @@ func (c *Client) EnsureBackend(backend *models.Backend) error {
 			Post(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends", c.config.BaseURL))
 		c.transactionDirty = true
 	} else if existing.Description != ManagedDescription {
+		logf.Log.V(2).Info("Backend exists but is not managed by us", "name", backend.Name, "object", backend)
 		// Backend exists but is not managed by us
 		return ErrNotManaged{
 			ResourceType: "backend",
 			ResourceName: backend.Name,
 		}
 	} else if !c.backendsEqual(existing, backend) {
+		// Log the update attempt
+		logf.Log.V(1).Info("Updating existing backend", "name", backend.Name, "object", backend)
+
 		// Update existing backend
 		resp, err = c.client.R().
 			SetHeader("Content-Type", "application/json").
@@ -74,8 +86,7 @@ func (c *Client) EnsureBackend(backend *models.Backend) error {
 			Put(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends/%s", c.config.BaseURL, backend.Name))
 		c.transactionDirty = true
 	} else {
-		// Backend is already in desired state
-		return nil
+		logf.Log.V(2).Info("Backend is already in desired state", "name", backend.Name, "object", backend)
 	}
 
 	if err != nil {
@@ -88,13 +99,45 @@ func (c *Client) EnsureBackend(backend *models.Backend) error {
 			Operation:  "update backend",
 		}
 	}
+
+	// Ensure http checks are set
+	if err := c.EnsureBackendHTTPCheck(backend.Name, backend.HTTPCheckList); err != nil {
+		return fmt.Errorf("ensuring backend HTTP checks: %w", err)
+	}
+	// Ensure servers are set
+	servers, err := c.ListServers(backend.Name)
+	if err != nil {
+		return fmt.Errorf("listing servers: %w", err)
+	}
+	for _, server := range backend.Servers {
+		if err := c.EnsureServer(backend.Name, &server); err != nil {
+			return fmt.Errorf("ensuring server %s: %w", server.Name, err)
+		}
+	}
+	// Ensure all servers are deleted that are not in the backend spec
+	for _, existingServer := range servers {
+		found := false
+		for _, server := range backend.Servers {
+			if existingServer.Name == server.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			if err := c.DeleteServer(backend.Name, existingServer.Name); err != nil {
+				return fmt.Errorf("deleting server %s: %w", existingServer.Name, err)
+			}
+		}
+	}
 	return nil
 }
 
 // ListBackends returns all backends managed by this controller
 func (c *Client) ListBackends() ([]*models.Backend, error) {
+	queryKey, queryVal, _ := c.getVersionOrTransactionParam()
 	resp, err := c.client.R().
 		SetHeader("Accept", "application/json").
+		SetQueryParam(queryKey, queryVal).
 		Get(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends", c.config.BaseURL))
 	if err != nil {
 		return nil, fmt.Errorf("api request failed: %w", err)
@@ -229,6 +272,7 @@ func (c *Client) EnsureBackendHTTPCheck(backend string, httpChecks []*models.HTT
 		SetBody(httpChecks).
 		SetQueryParam(queryKey, queryVal).
 		Put(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends/%s/http_checks", c.config.BaseURL, backend))
+	c.transactionDirty = true
 	if err != nil {
 		return err
 	}
@@ -239,8 +283,10 @@ func (c *Client) EnsureBackendHTTPCheck(backend string, httpChecks []*models.HTT
 }
 
 func (c *Client) getCurrentHTTPChecks(backend string) ([]*models.HTTPCheck, error) {
+	queryKey, queryVal, _ := c.getVersionOrTransactionParam()
 	resp, err := c.client.R().
 		SetHeader("Accept", "application/json").
+		SetQueryParam(queryKey, queryVal).
 		Get(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends/%s/http_checks", c.config.BaseURL, backend))
 	if err != nil {
 		return nil, err
@@ -305,8 +351,10 @@ func (c *Client) httpCheckEqual(a, b *models.HTTPCheck) bool {
 
 // GetServer retrieves a server from a backend
 func (c *Client) GetServer(backend, name string) (*models.Server, error) {
+	queryKey, queryVal, _ := c.getVersionOrTransactionParam()
 	resp, err := c.client.R().
 		SetHeader("Accept", "application/json").
+		SetQueryParam(queryKey, queryVal).
 		SetResult(&models.Server{}).
 		Get(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends/%s/servers/%s", c.config.BaseURL, backend, name))
 	if err != nil {
@@ -332,6 +380,7 @@ func (c *Client) EnsureServer(backend string, server *models.Server) error {
 
 	var resp *resty.Response
 	if existing == nil {
+		logf.Log.V(1).Info("Creating new server", "backend", backend, "name", server.Name, "object", server)
 		resp, err = c.client.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(server).
@@ -339,6 +388,7 @@ func (c *Client) EnsureServer(backend string, server *models.Server) error {
 			Post(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends/%s/servers", c.config.BaseURL, backend))
 		c.transactionDirty = true
 	} else if !c.serversEqual(existing, server) {
+		logf.Log.V(1).Info("Updating existing server", "backend", backend, "name", server.Name, "object", server)
 		resp, err = c.client.R().
 			SetHeader("Content-Type", "application/json").
 			SetBody(server).
@@ -358,8 +408,10 @@ func (c *Client) EnsureServer(backend string, server *models.Server) error {
 
 // ListServers lists all servers in a backend
 func (c *Client) ListServers(backend string) ([]*models.Server, error) {
+	queryKey, queryVal, _ := c.getVersionOrTransactionParam()
 	resp, err := c.client.R().
 		SetHeader("Accept", "application/json").
+		SetQueryParam(queryKey, queryVal).
 		Get(fmt.Sprintf("%s/v3/services/haproxy/configuration/backends/%s/servers", c.config.BaseURL, backend))
 	if err != nil {
 		return nil, fmt.Errorf("api request failed: %w", err)

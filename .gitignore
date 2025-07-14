@@ -23,7 +23,7 @@ codecov
 go.work
 
 # Kubernetes Generated files - skip generated files, except for vendored files
-!vendor/**/zz_generated.*
+zz_generated.*.go
 
 ### Writing/debugging scorecard tests
 /bundle/*

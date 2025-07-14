@@ -12,11 +12,19 @@ jobs:
     name: Run on Ubuntu
     runs-on: ubuntu-latest
     steps:
+      - name: Install pre-commit
+        run: sudo apt-get update -y && sudo apt-get install -y pre-commit
+
       - name: Clone the code
         uses: actions/checkout@v4
 
-      - name: Install pre-commit
-        run: sudo apt-get update -y && sudo apt-get install -y pre-commit
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run make generate
+        run: make generate
 
       - name: Check commits
         run: pre-commit run --hook-stage manual --all-files
