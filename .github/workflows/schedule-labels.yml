@@ -3,10 +3,10 @@ name: Schedule - Sync labels
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - .github/labels.yml
+#    branches:
+#      - main
+#    paths:
+#      - .github/labels.yml
   schedule:
     - cron: "0 9 * * *"
   workflow_dispatch:
