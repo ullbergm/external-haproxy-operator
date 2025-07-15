@@ -6,4 +6,26 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backend-sample
 spec:
-  # TODO(user): Add fields here
+  adv_check: httpchk
+  balance:
+    algorithm: leastconn
+  http_check_list:
+    - headers:
+        - fmt: example.com
+          name: Host
+      method: GET
+      type: send
+      uri: /
+  name: example
+  servers:
+    - address: 127.0.0.1
+      name: srv1
+      port: 443
+    - address: 127.0.0.2
+      name: srv2
+      port: 443
+    - port: 443
+      valueFrom:
+        serviceRef:
+          name: router-internal-default
+          namespace: openshift-ingress

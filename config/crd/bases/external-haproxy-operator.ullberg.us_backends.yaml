@@ -41,7 +41,7 @@ spec:
             properties:
               adv_check:
                 description: |-
-                  adv check
+                  adv check method
                   Enum: ["httpchk","ldap-check","mysql-check","pgsql-check","redis-check","smtpchk","ssl-hello-chk","tcp-check"]
                 enum:
                 - httpchk
@@ -54,7 +54,7 @@ spec:
                 - tcp-check
                 type: string
               balance:
-                description: balance
+                description: balancing algorithm
                 properties:
                   algorithm:
                     description: |-
