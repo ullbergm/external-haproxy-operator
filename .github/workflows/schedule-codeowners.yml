@@ -1,5 +1,7 @@
 ---
 name: Schedule - Codeowners
+permissions:
+  contents: read
 
 on:
   schedule:
