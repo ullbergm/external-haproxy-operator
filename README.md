@@ -130,6 +130,11 @@ Contributions are welcome! Please open issues or pull requests. See [Kubebuilder
 
 Run `make help` for available targets.
 
+### Useful references
+- [HAProxy Dataplane API](https://www.haproxy.com/documentation/dataplaneapi/community/)
+- [Operator Framework SDK](https://sdk.operatorframework.io/docs/building-operators/golang/)
+- [KubeBuilder.io](https://kubebuilder.io/)
+
 ---
 
 ## 🏆 Authors & contributors

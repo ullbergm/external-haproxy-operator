@@ -437,6 +437,7 @@ func (c *Client) DeleteServer(backend, name string) error {
 	if err != nil {
 		return fmt.Errorf("getting config version: %w", err)
 	}
+	logf.Log.V(1).Info("Deleting server", "backend", backend, "name", name)
 
 	resp, err := c.client.R().
 		SetQueryParam(queryKey, queryVal).
