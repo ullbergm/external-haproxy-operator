@@ -12,6 +12,15 @@ rules:
   - create
   - patch
 - apiGroups:
+  - corev1
+  resources:
+  - nodes
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - discoveryv1
   resources:
   - endpointslices
