@@ -10,9 +10,7 @@ jobs:
     name: Label Size
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      pull-requests: write
+    permissions: write-all
 
     steps:
       - name: size-label
