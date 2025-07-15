@@ -13,9 +13,7 @@ jobs:
     name: 🏭 Verify
     runs-on: ubuntu-latest
 
-    permissions:
-      pull-requests: write
-      contents: read
+    permissions: write-all
 
     steps:
       - name: 🏷 Verify PR has a valid label
