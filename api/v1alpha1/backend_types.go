@@ -23,29 +23,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // BackendSpec defines the desired state of Backend.
 type BackendSpec struct {
 	// name
 	// Required: true
 	// Pattern: ^[A-Za-z0-9-_.:]+$
 	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9-_.:]+$`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Name string `json:"name"`
 
-	// balance
+	// balancing algorithm
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Balance *Balance `json:"balance,omitempty"`
 
-	// adv check
+	// adv check method
 	// Enum: ["httpchk","ldap-check","mysql-check","pgsql-check","redis-check","smtpchk","ssl-hello-chk","tcp-check"]
 	// +kubebuilder:validation:Enum=httpchk;ldap-check;mysql-check;pgsql-check;redis-check;smtpchk;ssl-hello-chk;tcp-check;
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	AdvCheck string `json:"adv_check,omitempty"`
 
 	// servers
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Servers Servers `json:"servers,omitempty"`
 
 	// HTTP check list
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	HTTPCheckList HTTPChecks `json:"http_check_list,omitempty"`
 }
 
@@ -69,6 +71,7 @@ type Server struct {
 	// Optional: If ValueFrom is not set, Address is required.
 	// Pattern: ^[^\s]+$
 	// +kubebuilder:validation:Pattern=`^[^\s]+$`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Address string `json:"address,omitempty"`
 
 	// id
@@ -78,6 +81,7 @@ type Server struct {
 	// Optional: If ValueFrom is not set, Name is required.
 	// Pattern: ^[^\s]+$
 	// +kubebuilder:validation:Pattern=`^[^\s]+$`
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Name string `json:"name,omitempty"`
 
 	// port
@@ -85,11 +89,13 @@ type Server struct {
 	// Minimum: 1
 	// +kubebuilder:validation:Maximum=65535
 	// +kubebuilder:validation:Minimum=1
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	Port *int64 `json:"port,omitempty"`
 
 	// valueFrom
 	// Specify a source to populate the server's address/port from another resource (e.g., a Kubernetes Service).
 	// Optional: If Address/Name are not set, ValueFrom must be set.
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	ValueFrom *ServerValueFromSource `json:"valueFrom,omitempty"`
 	// Note: Either Address/Name or ValueFrom must be set. This is enforced at runtime, not by OpenAPI validation.
 }

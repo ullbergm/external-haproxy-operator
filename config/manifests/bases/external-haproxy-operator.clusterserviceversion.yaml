@@ -1,0 +1,76 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: external-haproxy-operator.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: Backend is the Schema for the backends API.
+      displayName: Backend
+      kind: Backend
+      name: backends.external-haproxy-operator.ullberg.us
+      specDescriptors:
+      - description: |-
+          adv check method
+          Enum: ["httpchk","ldap-check","mysql-check","pgsql-check","redis-check","smtpchk","ssl-hello-chk","tcp-check"]
+        displayName: Adv Check
+        path: adv_check
+      - description: balancing algorithm
+        displayName: Balance
+        path: balance
+      - description: HTTP check list
+        displayName: HTTPCheck List
+        path: http_check_list
+      - description: |-
+          name
+          Required: true
+          Pattern: ^[A-Za-z0-9-_.:]+$
+        displayName: Name
+        path: name
+      - description: servers
+        displayName: Servers
+        path: servers
+      statusDescriptors:
+      - description: Conditions store the status conditions of the Backend
+        displayName: Conditions
+        path: conditions
+      version: v1alpha1
+  description: Kubernetes operator for managing external HAProxy backends as custom
+    resources.
+  displayName: external-haproxy-operator
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: true
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - haproxy
+  - load balancer
+  links:
+  - name: External Haproxy Operator
+    url: https://external-haproxy-operator.domain
+  maintainers:
+  - email: magnus@ullberg.us
+    name: Magnus Ullberg
+  maturity: alpha
+  minKubeVersion: 1.31.9
+  provider:
+    name: Magnus Ullberg
+    url: https://github.com/ullbergm/external-haproxy-operator
+  version: 0.0.0
