@@ -12,6 +12,14 @@ rules:
   - create
   - patch
 - apiGroups:
+  - discoveryv1
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - external-haproxy-operator.ullberg.us
   resources:
   - backends

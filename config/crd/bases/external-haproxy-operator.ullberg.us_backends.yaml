@@ -150,7 +150,8 @@ spec:
                 pattern: ^[A-Za-z0-9-_.:]+$
                 type: string
               servers:
-                additionalProperties:
+                description: servers
+                items:
                   description: |-
                     HAProxy backend server configuration
                     Example: {"address":"10.1.1.1","name":"www","port":8080}
@@ -158,7 +159,7 @@ spec:
                     address:
                       description: |-
                         address
-                        Required: true
+                        Optional: If ValueFrom is not set, Address is required.
                         Pattern: ^[^\s]+$
                       pattern: ^[^\s]+$
                       type: string
@@ -177,7 +178,7 @@ spec:
                     name:
                       description: |-
                         name
-                        Required: true
+                        Optional: If ValueFrom is not set, Name is required.
                         Pattern: ^[^\s]+$
                       pattern: ^[^\s]+$
                       type: string
@@ -190,12 +191,40 @@ spec:
                       maximum: 65535
                       minimum: 1
                       type: integer
-                  required:
-                  - address
-                  - name
+                    valueFrom:
+                      description: |-
+                        valueFrom
+                        Specify a source to populate the server's address/port from another resource (e.g., a Kubernetes Service).
+                        Optional: If Address/Name are not set, ValueFrom must be set.
+                      properties:
+                        serviceRef:
+                          description: |-
+                            serviceRef
+                            Reference to a Kubernetes Service to dynamically resolve endpoints.
+                          properties:
+                            name:
+                              description: |-
+                                name
+                                Required: true
+                                Name of the Service to reference.
+                              pattern: ^[A-Za-z0-9-_.:]+$
+                              type: string
+                            namespace:
+                              description: |-
+                                namespace
+                                Namespace of the Service. Defaults to the backend resource's namespace if omitted.
+                              type: string
+                            port:
+                              description: |-
+                                port
+                                Name or number of the port to use from the Service.
+                              type: string
+                          required:
+                          - name
+                          type: object
+                      type: object
                   type: object
-                description: servers
-                type: object
+                type: array
             required:
             - name
             type: object

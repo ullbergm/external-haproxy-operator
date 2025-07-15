@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,9 +17,10 @@ limitations under the License.
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"fmt"
 
 	haproxy_models "github.com/haproxytech/client-native/v6/models"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -42,7 +43,7 @@ type BackendSpec struct {
 	AdvCheck string `json:"adv_check,omitempty"`
 
 	// servers
-	Servers map[string]Server `json:"servers,omitempty"`
+	Servers Servers `json:"servers,omitempty"`
 
 	// HTTP check list
 	HTTPCheckList HTTPChecks `json:"http_check_list,omitempty"`
@@ -65,19 +66,19 @@ type Server struct {
 	ServerParams `json:",inline"`
 
 	// address
-	// Required: true
+	// Optional: If ValueFrom is not set, Address is required.
 	// Pattern: ^[^\s]+$
 	// +kubebuilder:validation:Pattern=`^[^\s]+$`
-	Address string `json:"address"`
+	Address string `json:"address,omitempty"`
 
 	// id
 	ID *int64 `json:"id,omitempty"`
 
 	// name
-	// Required: true
+	// Optional: If ValueFrom is not set, Name is required.
 	// Pattern: ^[^\s]+$
 	// +kubebuilder:validation:Pattern=`^[^\s]+$`
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// port
 	// Maximum: 65535
@@ -85,9 +86,59 @@ type Server struct {
 	// +kubebuilder:validation:Maximum=65535
 	// +kubebuilder:validation:Minimum=1
 	Port *int64 `json:"port,omitempty"`
+
+	// valueFrom
+	// Specify a source to populate the server's address/port from another resource (e.g., a Kubernetes Service).
+	// Optional: If Address/Name are not set, ValueFrom must be set.
+	ValueFrom *ServerValueFromSource `json:"valueFrom,omitempty"`
+	// Note: Either Address/Name or ValueFrom must be set. This is enforced at runtime, not by OpenAPI validation.
 }
 
-// ServerParams defines additional parameters for a server.
+// Validate checks that either Address/Name or ValueFrom is set, but not both.
+func (s *Server) Validate() error {
+	if (s.Address == "" || s.Name == "") && s.ValueFrom == nil {
+		return fmt.Errorf("either address/name or valueFrom must be set for server")
+	}
+	if (s.Address != "" || s.Name != "") && s.ValueFrom != nil {
+		return fmt.Errorf("only one of address/name or valueFrom may be set for server")
+	}
+	return nil
+}
+
+// ValidateServers checks all servers in a Servers slice.
+func ValidateServers(servers Servers) error {
+	for i, s := range servers {
+		if err := s.Validate(); err != nil {
+			return fmt.Errorf("server[%d]: %w", i, err)
+		}
+	}
+	return nil
+}
+
+// ServerValueFromSource represents a source for the server's value (address/port) from another resource.
+type ServerValueFromSource struct {
+	// serviceRef
+	// Reference to a Kubernetes Service to dynamically resolve endpoints.
+	ServiceRef *K8sServiceRef `json:"serviceRef,omitempty"`
+}
+
+// K8sServiceRef allows referencing a Kubernetes Service object for dynamic endpoint resolution.
+type K8sServiceRef struct {
+	// namespace
+	// Namespace of the Service. Defaults to the backend resource's namespace if omitted.
+	Namespace string `json:"namespace,omitempty"`
+
+	// name
+	// Required: true
+	// Name of the Service to reference.
+	// +kubebuilder:validation:Pattern=`^[A-Za-z0-9-_.:]+$`
+	Name string `json:"name"`
+
+	// port
+	// Name or number of the port to use from the Service.
+	Port string `json:"port,omitempty"`
+}
+
 type ServerParams struct {
 	// check
 	// Enum: ["enabled","disabled"]
@@ -156,8 +207,8 @@ func BackendSpecToModel(spec BackendSpec) *haproxy_models.Backend {
 	}
 
 	servers := make(map[string]haproxy_models.Server)
-	for name, s := range spec.Servers {
-		servers[name] = haproxy_models.Server{
+	for _, s := range spec.Servers {
+		servers[s.Name] = haproxy_models.Server{
 			Name:    s.Name,
 			Address: s.Address,
 			Port:    s.Port,
@@ -201,14 +252,15 @@ func ModelToBackendSpec(model *haproxy_models.Backend) BackendSpec {
 		}
 	}
 
-	servers := make(map[string]Server)
-	for name, s := range model.Servers {
-		servers[name] = Server{
+	servers := make(Servers, 0, len(model.Servers))
+	for _, s := range model.Servers {
+		server := &Server{
 			Name:    s.Name,
 			Address: s.Address,
 			Port:    s.Port,
 			ID:      s.ID,
 		}
+		servers = append(servers, server)
 	}
 
 	httpChecks := make(HTTPChecks, 0, len(model.HTTPCheckList))
