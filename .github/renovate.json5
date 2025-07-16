@@ -48,7 +48,8 @@
                 "golang-version"
             ],
             "addLabels": [
-                "renovate/go"
+                "renovate/go",
+                "dependencies"
             ]
         },
         {
@@ -92,7 +93,8 @@
                 "docker"
             ],
             "addLabels": [
-                "renovate/container"
+                "renovate/container",
+                "dependencies"
             ]
         },
         {
@@ -129,7 +131,8 @@
                 "github-actions"
             ],
             "addLabels": [
-                "renovate/github-action"
+                "renovate/github-action",
+                "dependencies"
             ]
         },
         {
